@@ -9,7 +9,6 @@ public class ThreadPractise {
         thread.start(); //тут уже другое имя, та как это наш наш новый поток Thread-0
 
         final Thread thread2 = new Thread() {
-
             @Override
             public void run() {
                 System.out.println(currentThread().getName());
