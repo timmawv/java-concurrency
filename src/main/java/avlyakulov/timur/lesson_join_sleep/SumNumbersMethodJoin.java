@@ -1,4 +1,4 @@
-package avlyakulov.timur.lesson_2;
+package avlyakulov.timur.lesson_join_sleep;
 
 import java.util.stream.IntStream;
 

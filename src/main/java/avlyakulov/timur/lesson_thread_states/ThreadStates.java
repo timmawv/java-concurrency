@@ -1,4 +1,4 @@
-package avlyakulov.timur.lesson_3;
+package avlyakulov.timur.lesson_thread_states;
 
 public class ThreadStates {
     private static final String MESSAGE_TEMPLATE_THREAD_STATE = "%s : %s\n";

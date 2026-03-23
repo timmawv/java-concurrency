@@ -1,4 +1,4 @@
-package avlyakulov.timur.lesson_4;
+package avlyakulov.timur.lesson_interruption;
 
 import java.util.concurrent.TimeUnit;
 

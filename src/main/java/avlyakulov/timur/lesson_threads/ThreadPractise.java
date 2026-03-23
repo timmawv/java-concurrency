@@ -1,4 +1,4 @@
-package avlyakulov.timur.lesson_1;
+package avlyakulov.timur.lesson_threads;
 
 public class ThreadPractise {
 

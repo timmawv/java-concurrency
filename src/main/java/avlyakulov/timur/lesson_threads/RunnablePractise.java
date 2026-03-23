@@ -1,4 +1,4 @@
-package avlyakulov.timur.lesson_1;
+package avlyakulov.timur.lesson_threads;
 
 import static java.util.stream.IntStream.range;
 
