@@ -20,12 +20,18 @@ public class MessageBroker {
 
     public synchronized void produce(Message message, MessageProducingTask producingTask) {
         try {
+            //мы используем while() потому что потоки могут проснуться в любой момент, если использовать if они проснуться и будет дальше непонятная логика.
+            //При while() они просыпаються и видят что логика еще не выполнилась и спят дальше
             while (messagesToBeConsumed.size() >= maxStoredMessages) {
+                //Добавил пример когда мы можем задать время сколько поток ждать, тем самым мы можем предотвратить то что у нас все заснут
+                //та как поток сам проснется через заданое время и будет
+//                super.wait(1000);
                 super.wait();
             }
             this.messagesToBeConsumed.add(message);
             System.out.printf(MESSAGE_IS_PRODUCED, message, producingTask.getName(), this.messagesToBeConsumed.size() - 1);
             super.notifyAll();
+//            super.notify();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -35,23 +41,16 @@ public class MessageBroker {
         try {
             while (this.messagesToBeConsumed.isEmpty()) {
                 super.wait();
+//                super.wait(1000);
             }
             Message consumedMessage = messagesToBeConsumed.poll();
             System.out.printf(MESSAGE_IS_CONSUMED, consumedMessage, consumingTask.getName(), this.messagesToBeConsumed.size() + 1);
             super.notifyAll();
+//            super.notify();
             return Optional.ofNullable(consumedMessage);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return Optional.empty();
         }
-    }
-
-    private boolean isShouldConsume(MessageConsumingTask consumingTask) {
-        return !this.messagesToBeConsumed.isEmpty() && this.messagesToBeConsumed.size() >= consumingTask.getMinimalAmountMessageToConsume();
-    }
-
-    private boolean isShouldProduce(MessageProducingTask producingTask) {
-        return this.messagesToBeConsumed.size() < maxStoredMessages
-                && messagesToBeConsumed.size() < producingTask.getMaximalAmountMessagesToProduce();
     }
 }
