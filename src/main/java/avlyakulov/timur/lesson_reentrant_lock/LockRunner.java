@@ -8,10 +8,10 @@ import java.util.stream.IntStream;
 public class LockRunner {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         EventNumberGenerator eventNumberGenerator = new EventNumberGenerator();
         Runnable generatingTask = () -> IntStream.range(0, 100).forEach(i -> {
-            eventNumberGenerator.generate();
+            eventNumberGenerator.generateWithLock();
             System.out.println(eventNumberGenerator.getPreviousGenerated());
         });
 
@@ -36,10 +36,14 @@ public class LockRunner {
             this.lock = new ReentrantLock();
         }
 
-        public int generate() {
+        public void generate() {
+            ++previousGenerated;
+        }
+
+        public int generateWithLock() {
             lock.lock();
             try {
-                return this.previousGenerated += 2;
+                return this.previousGenerated += 1;
             } finally {
                 lock.unlock();
             }
