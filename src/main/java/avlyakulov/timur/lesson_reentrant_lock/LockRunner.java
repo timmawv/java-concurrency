@@ -41,12 +41,20 @@ public class LockRunner {
         }
 
         public int generateWithLock() {
-            lock.lock();
+            return lock.tryLock() ? onSuccessAcquireLock() : onFailureAcquireLock();
+        }
+
+        private int onSuccessAcquireLock() {
             try {
-                return this.previousGenerated += 1;
+                return this.previousGenerated += 2;
             } finally {
                 lock.unlock();
             }
+        }
+
+        private int onFailureAcquireLock() {
+            System.out.printf("Thread %s didn't acquire lock\n", Thread.currentThread().getName());
+            throw new RuntimeException();
         }
 
         public int getPreviousGenerated() {
