@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
-public class LockRunner {
+public class AdvanceLockRunner {
 
     public static void main(String[] args) throws InterruptedException {
         //здесь рассмотрели дополнительные возможности ReentrantLock
