@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 //54 - ReentrantLock
 //200 - ReadWriteLock
 public class ReadWriteLockRunner {
-    //todo разобрать этот пример лучше. В целом понятно что ReadWriteLock лучше когпа операции записи занимают определенное время
+    //todo разобрать этот пример лучше. В целом понятно что ReadWriteLock лучше когда операции записи занимают определенное время
     public static void main(String[] args) throws InterruptedException {
         testCounter(() -> new CounterProtectedByLock());
     }
