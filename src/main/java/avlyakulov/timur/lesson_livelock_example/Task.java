@@ -6,12 +6,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 public class Task implements Runnable {
-    private static String MESSAGE_TEMPLATE_TRY_ACQUIRE_LOCK = "Thread %s is trying to acquire lock %s\n";
-    private static String MESSAGE_TEMPLATE_SUCCESS_ACQUIRE_LOCK = "Thread %s acquired lock %s\n";
-    private static String MESSAGE_TEMPLATE_RELEASED_LOCK = "Thread %s released lock %s\n";
+    private final static String MESSAGE_TEMPLATE_TRY_ACQUIRE_LOCK = "Thread %s is trying to acquire lock %s\n";
+    private final static String MESSAGE_TEMPLATE_SUCCESS_ACQUIRE_LOCK = "Thread %s acquired lock %s\n";
+    private final static String MESSAGE_TEMPLATE_RELEASED_LOCK = "Thread %s released lock %s\n";
 
-    private static String NAME_FIRST_LOCK = "first Lock";
-    private static String NAME_SECOND_LOCK = "second Lock";
+    private final static String NAME_FIRST_LOCK = "first Lock";
+    private final static String NAME_SECOND_LOCK = "second Lock";
 
     private final Lock firstLock;
     private final Lock secondLock;
