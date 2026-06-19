@@ -15,7 +15,7 @@ public class MessageConsumingTask implements Runnable{
     public void run() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                TimeUnit.SECONDS.sleep(1);
+                TimeUnit.SECONDS.sleep(3);
                 Message consumedMessage = messageBroker.consume();
                 System.out.printf(MESSAGE_IS_CONSUMED, consumedMessage);
             }
