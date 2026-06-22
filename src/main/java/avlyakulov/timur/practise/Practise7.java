@@ -18,11 +18,13 @@ public class Practise7 {
         Thread producerThread2 = new Thread(createThreadInLoop(() -> messageBroker.produce(tasks), true));
         Thread producerThread3 = new Thread(createThreadInLoop(() -> messageBroker.produce(tasks), true));
         Thread consumerThread = new Thread(createThreadInLoop(() -> messageBroker.consume(tasks), false));
+        Thread consumerThread2 = new Thread(createThreadInLoop(() -> messageBroker.consume(tasks), false));
 
         producerThread.start();
         producerThread2.start();
         producerThread3.start();
         consumerThread.start();
+        consumerThread2.start();
     }
 
     private static Runnable createThreadInLoop(Runnable action, boolean isProducer) {
