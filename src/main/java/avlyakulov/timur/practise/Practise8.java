@@ -8,6 +8,7 @@ public class Practise8 {
 
     private static final int amount = 10;
 
+    //Задача 15. Банкомат и ReentrantLock
     public static void main(String[] args) {
         BankAccount bankAccount = new BankAccount();
         Thread thread1 = new Thread(createRunnable(bankAccount, amount));
