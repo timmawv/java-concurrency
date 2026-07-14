@@ -11,15 +11,15 @@ public class Practise8 {
     //Задача 15. Банкомат и ReentrantLock
     public static void main(String[] args) {
         BankAccount bankAccount = new BankAccount();
-        Thread thread1 = new Thread(createRunnable(bankAccount, amount));
-        Thread thread2 = new Thread(createRunnable(bankAccount, amount));
-        Thread thread3 = new Thread(createRunnable(bankAccount, amount));
-        Thread thread4 = new Thread(createRunnable(bankAccount, amount));
+        Thread client1 = new Thread(createRunnable(bankAccount, amount));
+        Thread client2 = new Thread(createRunnable(bankAccount, amount));
+        Thread client3 = new Thread(createRunnable(bankAccount, amount));
+        Thread client4 = new Thread(createRunnable(bankAccount, amount));
 
-        thread1.start();
-        thread2.start();
-        thread3.start();
-        thread4.start();
+        client1.start();
+        client2.start();
+        client3.start();
+        client4.start();
     }
 
     private static Runnable createRunnable(BankAccount bankAccount, int amountToWithdraw) {

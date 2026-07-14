@@ -10,6 +10,7 @@ public class Practise6 {
 
     public static void main(String[] args) {
         //wait и notify могут вызываться только в синхроинизрованном методе, без этого будет ошибка
+        //1 producer 1 consumer
         Queue<String> tasks = new ArrayDeque<>();
 
         MessageBroker messageBroker = new MessageBroker();

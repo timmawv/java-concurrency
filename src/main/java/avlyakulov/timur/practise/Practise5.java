@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 
 public class Practise5 {
 
+    //задача пример разницы Callable and Runnable
     @SneakyThrows
     public static void main(String[] args) {
         ExecutorService executorService = Executors.newFixedThreadPool(3);
