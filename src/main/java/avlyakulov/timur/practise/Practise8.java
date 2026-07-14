@@ -31,13 +31,13 @@ public class Practise8 {
 
     static class BankAccount {
 
-        private int balance = 1000;
+        private int balance = 100;
 
         @SneakyThrows
         public synchronized boolean withdraw(int amountToWithdraw) {
             System.out.println(Thread.currentThread().getName() + " пытается снять деньги " + amountToWithdraw);
             if (balance >= amountToWithdraw) {
-                TimeUnit.MILLISECONDS.sleep(100);
+                TimeUnit.MILLISECONDS.sleep(200);
                 balance -= amountToWithdraw;
                 System.out.println(Thread.currentThread().getName() + " снял успешно деньги остаток " + balance);
                 return true;

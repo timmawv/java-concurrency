@@ -14,6 +14,7 @@ public class Practise1 {
     }
 
     static class ThreadClass extends Thread {
+
         @Override
         public void run() {
             IntStream.range(0, 10).forEach(System.out::println);
