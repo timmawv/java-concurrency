@@ -7,9 +7,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Practise9 {
 
-    private static final int amount = 10;
-    private static final int secondsToSleep = 200;
-
     //Задача 16. tryLock()
     public static void main(String[] args) {
         BankAccount bankAccount = new BankAccount();
@@ -28,32 +25,28 @@ public class Practise9 {
     private static Runnable createRunnable(BankAccount bankAccount) {
         return () -> {
             while (!Thread.currentThread().isInterrupted())
-                bankAccount.withdraw(amount);
+                bankAccount.withdraw();
         };
     }
 
     static class BankAccount {
 
-        private int balance = 100;
         private final ReentrantLock lock = new ReentrantLock();
 
         @SneakyThrows
-        public boolean withdraw(int amountToWithdraw) {
-            System.out.println(Thread.currentThread().getName() + " пытается снять деньги " + amountToWithdraw);
-            if (balance >= amountToWithdraw) {
-                lock.tryLock(2, TimeUnit.SECONDS);
+        public void withdraw() {
+            boolean isLocked = lock.tryLock(2, TimeUnit.SECONDS);
+            if (isLocked) {
                 try {
-                    balance -= amountToWithdraw; // проблема этого действия, что это не одно действия а 3, поэтому без блокировок не обойтись
+                    System.out.println(Thread.currentThread().getName() + " получил доступ к счету и теперь выполняет операции");
+                    TimeUnit.SECONDS.sleep(5);
+                    System.out.println(Thread.currentThread().getName() + " выполнил операции и освободил банкомат");
                 } finally {
                     lock.unlock();
                 }
-                System.out.println(Thread.currentThread().getName() + " снял успешно деньги остаток " + balance);
-                TimeUnit.MILLISECONDS.sleep(secondsToSleep);
-                return true;
+                TimeUnit.SECONDS.sleep(2);
             } else {
-                System.out.println("Недостаточно средств");
-                TimeUnit.MILLISECONDS.sleep(secondsToSleep);
-                return false;
+                System.out.println(Thread.currentThread().getName() + " устал стоять в очереди и ждать и он ушел после того как не получил блокировку ");
             }
         }
     }
