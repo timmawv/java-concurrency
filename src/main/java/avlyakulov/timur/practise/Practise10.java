@@ -46,9 +46,9 @@ public class Practise10 {
         @SneakyThrows
         public void parkCar(Car car) {
             System.out.println(car.getName() + " приехала");
-            boolean isLocked = reentrantLock.tryLock();
+            boolean isLocked = reentrantLock.tryLock(3, TimeUnit.SECONDS);
             if (isLocked) {
-                if (cars.length != 3) {
+                if (!isParkingFull()) {
                     try {
                         addCarToParking(car);
                     } finally {
@@ -71,7 +71,8 @@ public class Practise10 {
                 }
             } else {
                 System.out.println(car.getName() + " ждет свободное место");
-                condition.await();
+                while (isParkingFull())
+                    condition.await();
             }
         }
 
@@ -83,6 +84,10 @@ public class Practise10 {
         private void removeCarFromParking() {
             cars[currentParkPlace] = null;
             --currentParkPlace;
+        }
+
+        private boolean isParkingFull() {
+            return currentParkPlace == 2;
         }
     }
 
