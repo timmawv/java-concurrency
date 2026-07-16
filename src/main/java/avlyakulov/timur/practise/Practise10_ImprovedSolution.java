@@ -82,6 +82,7 @@ public class Practise10_ImprovedSolution {
         }
 
         private void removeCarFromParking() {
+            //todo тут баг, когда машина больше чем 1 мы удаляем просто последнюю машину и все
             cars[currentParkPlace - 1] = null;
             --currentParkPlace;
         }
