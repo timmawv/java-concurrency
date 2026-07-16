@@ -1,5 +1,6 @@
 package avlyakulov.timur.practise;
 
+import avlyakulov.timur.utils.LoggerColor;
 import lombok.SneakyThrows;
 
 import java.util.concurrent.TimeUnit;
@@ -53,12 +54,12 @@ public class Practise10_ImprovedSolution {
                 } finally {
                     reentrantLock.unlock();
                 }
-                System.out.println(car.getName() + " запарковалась");
+                LoggerColor.printMessageWithColor(car.getName() + " запарковалась", LoggerColor.Color.GREEN);
                 TimeUnit.SECONDS.sleep(5);
                 reentrantLock.lock();
                 try {
                     removeCarFromParking();
-                    System.out.println(car.getName() + " покинула парковку");
+                    LoggerColor.printMessageWithColor(car.getName() + " покинула парковку", LoggerColor.Color.RED);
                     condition.signal();
                 } finally {
                     reentrantLock.unlock();
@@ -66,7 +67,7 @@ public class Practise10_ImprovedSolution {
 
             } else {
                 try {
-                    System.out.println(car.getName() + " ждет свободное место");
+                    LoggerColor.printMessageWithColor(car.getName() + " ждет свободное место", LoggerColor.Color.YELLOW);
                     while (isParkingFull())
                         condition.await();
                 } finally {
