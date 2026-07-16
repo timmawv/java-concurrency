@@ -41,12 +41,17 @@ public class Practise10 {
         private final ReentrantLock reentrantLock = new ReentrantLock();
         private final Condition condition = reentrantLock.newCondition();
 
-        private Car[] cars = new Car[1];
+        private Car[] cars = new Car[2];
         private int currentParkPlace = 0;
 
         @SneakyThrows
         public void parkCar(Car car) {
+            //если использовать tryLock() щас мы пытаемся запарковаться и если нет то просто уходим и потом еще раз цыклом заходим
+            //Лучше использовать lock() тогда мы становимся в очередь и будем ждать пока лок освободиться чтоб потом зайти и захватить его
             boolean isLocked = reentrantLock.tryLock();
+            //У этой реализации есть большой минус. Когда все потоки спят, то 1 поток если убрать Thread.sleep() будет постояно заезжать и уезжать
+            //потому что как другой поток проснется, он просто не успеет захватить лок и он уже будет занят тем потоком который освободился и захватил его снова
+            //итого 1 машина заезжает выезжает, захватывает поток и прочее. Получается поток который спал, проснулся освободил лок, 1 машина уже снова заехала
             if (isLocked) {
                 if (!isParkingFull()) {
                     try {
@@ -55,6 +60,7 @@ public class Practise10 {
                         reentrantLock.unlock();
                     }
                     System.out.println(car.getName() + " запарковалась");
+                    //Из за того что потоки спят одинаковое время потом вместе захватывают лок и 1 машина покидает парковку, 2 не может ее покинуть и остается навсегда в массиве
                     TimeUnit.SECONDS.sleep(5);
                     boolean isLockInPark = reentrantLock.tryLock();
                     if (isLockInPark) {
@@ -67,12 +73,16 @@ public class Practise10 {
                         }
                         TimeUnit.SECONDS.sleep(2); //После того как покинули парковку, надо сделать паузу либо лок будет моментально захвачен снова тем же потоком
                     } else {
+                        //если этот кейс отработал то машина просто исчезает из парковки но при этом остается в массиве и пыается снова заехать, при этом находясь в массиве
                         System.out.println("ERROR IN CODE: Car can't leave the building");
                     }
                 } else {
                     try {
                         System.out.println(car.getName() + " ждет свободное место");
                         while (isParkingFull())
+                            //очень интересный момент. Ломал голову почему с захваченным локом мы можем спать и потом просыпаться и работать дальше
+                            //Оказывается когда мы идем в сон, мы освобождаем Lock и потом время от времени проверяем условие, если уже не занята парковка и есть место
+                            //Мы пытаемся захватить Lock и если он захвачем, мы снова то мы просыпаемся и выходим и делаем действия что нужны.
                             condition.await();
                     } finally {
                         reentrantLock.unlock();
