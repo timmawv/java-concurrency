@@ -46,41 +46,32 @@ public class Practise10_ImprovedSolution {
 
         @SneakyThrows
         public void parkCar(Car car) {
-            boolean isLocked = reentrantLock.tryLock();
-            if (isLocked) {
-                if (!isParkingFull()) {
-                    try {
-                        addCarToParking(car);
-                    } finally {
-                        reentrantLock.unlock();
-                    }
-                    System.out.println(car.getName() + " запарковалась");
-                    TimeUnit.SECONDS.sleep(5);
-                    boolean isLockInPark = reentrantLock.tryLock();
-                    if (isLockInPark) {
-                        try {
-                            removeCarFromParking();
-                            System.out.println(car.getName() + " покинула парковку");
-                            condition.signal();
-                        } finally {
-                            reentrantLock.unlock();
-                        }
-                        TimeUnit.SECONDS.sleep(2);
-                    } else {
-
-                        System.out.println("ERROR IN CODE: Car can't leave the building");
-                    }
-                } else {
-                    try {
-                        System.out.println(car.getName() + " ждет свободное место");
-                        while (isParkingFull())
-                            condition.await();
-                    } finally {
-                        reentrantLock.unlock();
-                    }
+            reentrantLock.lock();
+            if (!isParkingFull()) {
+                try {
+                    addCarToParking(car);
+                } finally {
+                    reentrantLock.unlock();
                 }
+                System.out.println(car.getName() + " запарковалась");
+                TimeUnit.SECONDS.sleep(5);
+                reentrantLock.lock();
+                try {
+                    removeCarFromParking();
+                    System.out.println(car.getName() + " покинула парковку");
+                    condition.signal();
+                } finally {
+                    reentrantLock.unlock();
+                }
+
             } else {
-                System.out.println("Reentrant Lock парковки заблокированный поэтому " + car.getName() + " ждет когда разблокируется");
+                try {
+                    System.out.println(car.getName() + " ждет свободное место");
+                    while (isParkingFull())
+                        condition.await();
+                } finally {
+                    reentrantLock.unlock();
+                }
             }
         }
 
