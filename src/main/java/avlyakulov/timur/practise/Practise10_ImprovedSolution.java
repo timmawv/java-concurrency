@@ -3,6 +3,7 @@ package avlyakulov.timur.practise;
 import avlyakulov.timur.utils.LoggerColor;
 import lombok.SneakyThrows;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -33,7 +34,7 @@ public class Practise10_ImprovedSolution {
     private static Runnable createRunnable(Car car, Parking parking) {
         return () -> {
             while (!Thread.currentThread().isInterrupted())
-                parking.parkCar(car);
+                parking.parkCar2(car);
         };
     }
 
@@ -46,45 +47,50 @@ public class Practise10_ImprovedSolution {
         private int currentParkPlace = 0;
 
         @SneakyThrows
-        public void parkCar(Car car) {
+        public void parkCar2(Car car) {
             reentrantLock.lock();
-            if (!isParkingFull()) {
-                try {
-                    addCarToParking(car);
-                } finally {
-                    reentrantLock.unlock();
-                }
-                LoggerColor.printMessageWithColor(car.getName() + " запарковалась", LoggerColor.Color.GREEN);
-                TimeUnit.SECONDS.sleep(5);
-                reentrantLock.lock();
-                try {
-                    removeCarFromParking();
-                    LoggerColor.printMessageWithColor(car.getName() + " покинула парковку", LoggerColor.Color.RED);
-                    condition.signal();
-                } finally {
-                    reentrantLock.unlock();
-                }
-
-            } else {
-                try {
+            try {
+                if (isParkingFull()) {
                     LoggerColor.printMessageWithColor(car.getName() + " ждет свободное место", LoggerColor.Color.YELLOW);
-                    while (isParkingFull())
+                    while (isParkingFull()) {
                         condition.await();
-                } finally {
-                    reentrantLock.unlock();
+                    }
+                }
+                addCarToParking(car);
+            } finally {
+                reentrantLock.unlock();
+            }
+            LoggerColor.printMessageWithColor(car.getName() + " запарковалась", LoggerColor.Color.GREEN);
+            TimeUnit.SECONDS.sleep(3);
+            reentrantLock.lock();
+            try {
+                removeCarFromParking(car);
+                condition.signal();
+            } finally {
+                reentrantLock.unlock();
+            }
+            LoggerColor.printMessageWithColor(car.getName() + " покинула парковку", LoggerColor.Color.RED);
+        }
+
+        private void addCarToParking(Car car) {
+            for (int i = 0; i < cars.length; ++i) {
+                if (cars[i] == null) {
+                    cars[i] = car;
+                    ++currentParkPlace;
+                    return;
                 }
             }
         }
 
-        private void addCarToParking(Car car) {
-            cars[currentParkPlace] = car;
-            ++currentParkPlace;
-        }
-
-        private void removeCarFromParking() {
-            //todo тут баг, когда машина больше чем 1 мы удаляем просто последнюю машину и все
-            cars[currentParkPlace - 1] = null;
-            --currentParkPlace;
+        private void removeCarFromParking(Car car) {
+            for (int i = 0; i < cars.length; ++i) {
+                Car car1 = cars[i];
+                if (Objects.nonNull(car1) && car.getNumberCar() == car1.getNumberCar()) {
+                    cars[i] = null;
+                    --currentParkPlace;
+                    return;
+                }
+            }
         }
 
         private boolean isParkingFull() {
@@ -102,6 +108,10 @@ public class Practise10_ImprovedSolution {
 
         public String getName() {
             return "Car-" + numberCar;
+        }
+
+        public int getNumberCar() {
+            return numberCar;
         }
     }
 }
