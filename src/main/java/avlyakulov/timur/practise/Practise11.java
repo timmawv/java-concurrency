@@ -62,7 +62,7 @@ public class Practise11 {
                 System.out.println(Thread.currentThread().getName() + " захватил Reentrant Lock A");
                 TimeUnit.MILLISECONDS.sleep(100);
                 System.out.println(Thread.currentThread().getName() + " сейчас будет захватывать Reentrant Lock B");
-                reentrantLockB.lock();
+                reentrantLockB.lock();//вызывая тут lock мы становимся в бесконечную очередь, ожидая освобождения лока
                 try {
                     System.out.println(Thread.currentThread().getName() + " захватил Reentrant Lock B");
                 } finally {
