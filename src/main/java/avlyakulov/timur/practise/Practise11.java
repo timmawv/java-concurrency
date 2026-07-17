@@ -16,15 +16,17 @@ public class Practise11 {
 
 
     //Задача 18. Создай deadlock
+    @SneakyThrows
     public static void main(String[] args) {
         //создал deadlock когда 2 потока в синхронизации пытаются захватить monitor другого объекта
         //создал deadlock когда 2 потока в lock пытаются захватить lock другого lock
-//        Thread thread = new Thread(createRunnableInSynchronized(lockA, lockB));
-//        Thread thread1 = new Thread(createRunnableInSynchronized(lockB, lockA));
-//
-//        thread.start();
-//        thread1.start();
+        Thread thread = new Thread(createRunnableInSynchronized(lockA, lockB));
+        Thread thread1 = new Thread(createRunnableInSynchronized(lockB, lockA));
 
+        thread.start();
+        thread1.start();
+
+        TimeUnit.MILLISECONDS.sleep(100);
 
         Thread thread2 = new Thread(createRunnableInReentrantLock(reentrantLockA, reentrantLockB));
         Thread thread3 = new Thread(createRunnableInReentrantLock(reentrantLockB, reentrantLockA));
