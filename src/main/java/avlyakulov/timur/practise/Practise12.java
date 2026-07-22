@@ -54,9 +54,9 @@ public class Practise12 {
         ReentrantLock toLock = to.getReentrantLock();
         System.out.printf("Информация до блокировки! Работник Банка - %s. Перевод между (%s, %s)\n", Thread.currentThread().getName(), from.getId(), to.getId());
         fromLock.lock();
-        System.out.println("Поток " + Thread.currentThread().getName() + " взял успешно 1 лок");
+        System.out.println("Поток " + Thread.currentThread().getName() + " взял успешно 1 лок " + from.getId());
         toLock.lock();
-        System.out.println("Поток " + Thread.currentThread().getName() + " взял успешно 2 лок");
+        System.out.println("Поток " + Thread.currentThread().getName() + " взял успешно 2 лок " + to.getId());
         try {
             //System.out.printf("Работник Банка - %s. Перевод между (%s, %s). Баланс отправителя (id = %s) %s, Баланс получателя (id = %s) %s, Сумма перевода %s. Время перевода %s\n", Thread.currentThread().getName(), from.getId(), to.getId(), from.getId(), from.getBalance(), to.getId(), to.getBalance(), amount, LocalDateTime.now().toLocalTime());
             if (canAccountSendMoney(amount, from.getBalance())) {
