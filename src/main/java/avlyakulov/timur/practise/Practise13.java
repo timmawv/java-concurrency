@@ -1,5 +1,6 @@
 package avlyakulov.timur.practise;
 
+import avlyakulov.timur.utils.LoggerColor;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class Practise13 {
     private static final Random random = new Random();
     private static final int numberOfClient = 6;
     private static final int balanceClient = 300;
-    private static final int amountToTransfer = 30;
+    private static final int amountToTransfer = 100;
 
     // Финальная задача. Мини-Банк
     @SneakyThrows
@@ -88,9 +89,15 @@ public class Practise13 {
             Account from = accounts.get(fromId);
             Account to = accounts.get(toId);
             lockForTransfer(from, to);
+            System.out.printf("Информация до блокировки! Работник Банка - %s. Перевод между (%s, %s)\n", Thread.currentThread().getName(), from.getId(), to.getId());
             try {
-                completeTransfer(from, to);
-                putToBankOperation(bank, from, to);
+                if (from.canDeposit(amountToTransfer)) {
+                    completeTransfer(from, to);
+                    putToBankOperation(bank, from, to);
+                    LoggerColor.printMessageWithColor("Поток " + Thread.currentThread().getName() + " перевод выполнил", LoggerColor.Color.GREEN);
+                } else {
+                    LoggerColor.printMessageWithColor("У отправителя " + from.getId() + " недостаточно денег ", LoggerColor.Color.RED);
+                }
             } finally {
                 from.getLock().unlock();
                 to.getLock().unlock();
@@ -225,7 +232,7 @@ public class Practise13 {
         }
 
         public void printTransfers() {
-            System.out.println(bankOperations);
+            System.out.printf("Информация от работинка банка %s. Выполнено такое количество переводов %d\n", Thread.currentThread().getName(), counterOperationId);
         }
 
         public int getAndIncrementCounter() {
