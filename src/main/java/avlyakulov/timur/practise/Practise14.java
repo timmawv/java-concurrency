@@ -53,9 +53,9 @@ public class Practise14 {
             try {
                 String phonePerson = phoneBook.getOrDefault(namePerson, StringUtils.EMPTY);
                 if (StringUtils.isNotBlank(phonePerson)) {
-                    LoggerColor.printMessageWithColor("Person with this name %s and this phone %s exist in database\n".formatted(namePerson, phonePerson), LoggerColor.Color.GREEN);
+                    LoggerColor.printMessageWithColor("Thead-Reader. Person with this name %s and this phone %s exist in database\n".formatted(namePerson, phonePerson), LoggerColor.Color.GREEN);
                 } else {
-                    LoggerColor.printMessageWithColor("Person with this name %s doesn't exist\n".formatted(namePerson), LoggerColor.Color.RED);
+                    LoggerColor.printMessageWithColor("Thead-Reader. Person with this name %s doesn't exist\n".formatted(namePerson), LoggerColor.Color.RED);
                 }
             } finally {
                 readLock.unlock();
@@ -85,14 +85,14 @@ public class Practise14 {
             String phonePattern = "+38066895185";
             int indexArr = random.nextInt(0, names.size());
             String namePerson = peopleNames.get(indexArr);
-            String phoneNumber = phonePattern.concat(String.valueOf(atomicInteger.getAndDecrement()));
+            String phoneNumber = phonePattern.concat(String.valueOf(atomicInteger.getAndIncrement()));
             writeLock.lock();
             try {
                 String key = phoneBook.putIfAbsent(namePerson, phoneNumber);
                 if (Objects.nonNull(key)) {
-                    LoggerColor.printMessageWithColor("Person with this name %s already exist\n".formatted(namePerson), LoggerColor.Color.RED);
+                    LoggerColor.printMessageWithColor("Thead-Writer. Person with this name %s already exist\n".formatted(namePerson), LoggerColor.Color.RED);
                 } else {
-                    LoggerColor.printMessageWithColor("Person with this name %s and this phone %s not exist in database and was added\n".formatted(namePerson, phoneNumber), LoggerColor.Color.GREEN);
+                    LoggerColor.printMessageWithColor("Thead-Writer. Person with this name %s and this phone %s not exist in database and was added\n".formatted(namePerson, phoneNumber), LoggerColor.Color.GREEN);
                 }
             } finally {
                 writeLock.unlock();
@@ -105,6 +105,5 @@ public class Practise14 {
     static class PhoneBook {
         private Map<String, String> book = new HashMap<>();
         ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-
     }
 }
