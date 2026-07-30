@@ -20,6 +20,9 @@ public class Practise14 {
     private static List<String> peopleNames = List.of("Alex", "Daren", "Lin", "David", "Harry", "Tymur", "Bohdan", "Dima");
 
     //Задача 21. Телефонная книга ⭐
+    //ReadWriteLock
+    //Главная идея в том что ReadWriteLock это про паралельное чтение для ридеров, они не блочат друг друга, но если заходит райтер, он ждем их остановки, потом ставит лок
+    //Потом он работает и другие ридеры уже ждут его конца. Профит в чтении
     public static void main(String[] args) {
         AtomicInteger atomicInteger = new AtomicInteger(0);
         PhoneBook phoneBook = new PhoneBook();
@@ -82,7 +85,7 @@ public class Practise14 {
 
         @SneakyThrows
         private void writeInformationToBook() {
-            String phonePattern = "+38066895185";
+            String phonePattern = "+3806689";
             int indexArr = random.nextInt(0, names.size());
             String namePerson = peopleNames.get(indexArr);
             String phoneNumber = phonePattern.concat(String.valueOf(atomicInteger.getAndIncrement()));
