@@ -5,10 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.sql.Time;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -21,60 +19,37 @@ public class Practise15 {
     //Задача 23. Парковка 2.0 ⭐
     //Semaphore
     public static void main(String[] args) {
-        Semaphore semaphore = new Semaphore(3);
-        ArrayDeque<Car> cars = IntStream.rangeClosed(1, 6).mapToObj(Car::new).collect(Collectors.toCollection(ArrayDeque::new));
-        Parking parking = new Parking();
-        ParkWorker parkWorker = new ParkWorker(cars, parking, semaphore);
+        Semaphore semaphore = new Semaphore(2, true);
+        Random random = new Random();
         ExecutorService executorService = Executors.newFixedThreadPool(6);
-        IntStream.rangeClosed(1, 6).forEach(i -> executorService.execute(parkWorker));
+        IntStream.rangeClosed(1, 6).forEach(i -> executorService.execute(new Car(i, semaphore, random)));
     }
 
-    @AllArgsConstructor
-    static class ParkWorker implements Runnable {
-        private Queue<Car> cars;
-        private Parking parking;
-        private Semaphore semaphore;
 
+    @Getter
+    @AllArgsConstructor
+    static class Car implements Runnable {
+
+        private int id;
+        private Semaphore semaphore;
+        private Random random;
 
         @SneakyThrows
         @Override
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
-                Car car = cars.poll();
                 try {
                     semaphore.acquire();
-                    parking.addCardToParking(car);
-                    TimeUnit.SECONDS.sleep(3);
-                    parking.removeCardToParking(car.getId());
+                    LoggerColor.printMessageWithColor("Car with this id %d went to the parking".formatted(this.id), LoggerColor.Color.GREEN);
+                    int timeToSleep = random.nextInt(3, 5);
+                    TimeUnit.SECONDS.sleep(timeToSleep);
+                } catch (InterruptedException e) {
+                    LoggerColor.printMessageWithColor("ERROR ERROR!", LoggerColor.Color.RED);
                 } finally {
+                    LoggerColor.printMessageWithColor("Car with this id %d left the parking".formatted(this.id), LoggerColor.Color.RED);
                     semaphore.release();
                 }
-                cars.add(car);
             }
         }
-    }
-
-    @Getter
-    static class Parking {
-        private List<Car> carsOnParking = new ArrayList<>();
-
-        public void addCardToParking(Car car) {
-            carsOnParking.add(car);
-            LoggerColor.printMessageWithColor("Car with this id %d joined the parking".formatted(car.getId()), LoggerColor.Color.GREEN);
-        }
-
-        public void removeCardToParking(int carId) {
-            if (carsOnParking.removeIf(car -> car.getId() == carId))
-                LoggerColor.printMessageWithColor("Car with this id %d left the parking".formatted(carId), LoggerColor.Color.RED);
-            else throw new IllegalArgumentException();
-        }
-    }
-
-
-
-    @Getter
-    @AllArgsConstructor
-    static class Car {
-        private int id;
     }
 }
