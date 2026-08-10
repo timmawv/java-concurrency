@@ -70,7 +70,7 @@ public class PractiseFinalTask {
 
         public Team(int idTeam, int maxPlayerInTeam, Lock lock) {
             this.idTeam = idTeam;
-            players = new ArrayList<>();
+            this.players = new ArrayList<>();
             this.maxPlayerInTeam = maxPlayerInTeam;
             this.lock = lock;
         }
@@ -108,11 +108,9 @@ public class PractiseFinalTask {
         private GameServer gameServer;
 
         @Override
-        @SneakyThrows
         public void run() {
             connectToServer();
-            CountDownLatch countDownLatch = getCountDownLatch();
-            countDownLatch.await();
+            waitAllPlayers();
             gameServer.addPlayerToTeam(this);
         }
 
@@ -135,6 +133,12 @@ public class PractiseFinalTask {
 
         public CountDownLatch getCountDownLatch() {
             return gameServer.getCountDownLatch();
+        }
+
+        @SneakyThrows
+        private void waitAllPlayers() {
+            CountDownLatch countDownLatch = getCountDownLatch();
+            countDownLatch.await();
         }
     }
 
