@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
 
 public class PractiseFinalTask {
@@ -42,7 +41,7 @@ public class PractiseFinalTask {
 
         public GameServer(CountDownLatch countDownLatch, int numberTeams, int maxPlayerInTeam) {
             this.countDownLatch = countDownLatch;
-            this.teams = createTeams(numberTeams, maxPlayerInTeam, new ReentrantReadWriteLock());
+            this.teams = createTeams(numberTeams, maxPlayerInTeam, new ReentrantLock());
         }
 
         public void addPlayerToTeam(Player player) {
@@ -54,9 +53,9 @@ public class PractiseFinalTask {
             }
         }
 
-        private List<Team> createTeams(int numberTeams, int maxPlayerInTeam, ReadWriteLock readWriteLock) {
-            return IntStream.rangeClosed(1, 3)
-                    .mapToObj(i -> new Team(i, maxPlayerInTeam, readWriteLock.readLock(), readWriteLock.writeLock()))
+        private List<Team> createTeams(int numberTeams, int maxPlayerInTeam, ReentrantLock reentrantLock) {
+            return IntStream.rangeClosed(1, numberTeams)
+                    .mapToObj(i -> new Team(i, maxPlayerInTeam, reentrantLock))
                     .toList();
         }
     }
@@ -67,19 +66,17 @@ public class PractiseFinalTask {
         private int idTeam;
         private List<Player> players;
         private int maxPlayerInTeam;
-        private Lock readLock;
-        private Lock writeLock;
+        private Lock lock;
 
-        public Team(int idTeam, int maxPlayerInTeam, Lock readLock, Lock writeLock) {
+        public Team(int idTeam, int maxPlayerInTeam, Lock lock) {
             this.idTeam = idTeam;
             players = new ArrayList<>();
             this.maxPlayerInTeam = maxPlayerInTeam;
-            this.readLock = readLock;
-            this.writeLock = writeLock;
+            this.lock = lock;
         }
 
         public boolean addPlayerToTeam(Player player) {
-            writeLock.lock();
+            lock.lock();
             try {
                 if (canAddToTeam()) {
                     players.add(player);
@@ -90,7 +87,7 @@ public class PractiseFinalTask {
                     return false;
                 }
             } finally {
-                writeLock.unlock();
+                lock.unlock();
             }
         }
 
