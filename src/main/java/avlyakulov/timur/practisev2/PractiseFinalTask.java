@@ -16,7 +16,7 @@ public class PractiseFinalTask {
 
     //Задача 29. Игровой сервер
     //Логика: Всего 6 игроков. Им сначало надо подключиться на сервер, для этого использовать CountDownLatch
-    //После того как они подключились, им нужно распределиться по командам, на 3 матча. Команда 2 человека, играют 1 на 1 в гонку.
+    //После того как они подключились, им нужно распределиться по командам, на 3 команды. Команда 2 человека, играют 1 на 1 в гонку.
     //Активных матчей может быть только 2, тоесть 2 матча идут, 1 ждет. Тут использовать Semaphore.
     //Идет подготовка к матчу, тут использовать CyclicBarrier ждем, пока все игроки загрузяться на карту и только потом она стартует.
     @SneakyThrows
@@ -26,38 +26,56 @@ public class PractiseFinalTask {
         int maxPlayerInTeam = 2;
         CountDownLatch countDownLatch = new CountDownLatch(numberPlayers);
         GameServer gameServer = new GameServer(countDownLatch, numberTeams, maxPlayerInTeam);
-        ExecutorService executorService = Executors.newFixedThreadPool(numberPlayers);
-        IntStream.rangeClosed(1, 6).forEach(i -> executorService.execute(new Player(i, gameServer)));
+        ExecutorService executorService = Executors.newFixedThreadPool(numberPlayers + 1);
+        IntStream.rangeClosed(1, numberPlayers).forEach(i -> executorService.execute(new Player(i, gameServer)));
+        executorService.execute(gameServer);
         executorService.shutdown();
     }
 
     @Getter
-    static class GameServer {
+    static class GameServer implements Runnable {
 
         private CountDownLatch countDownLatch;
         private List<Team> teams;
+        private Lock lock;
+        private int numberPlayers;
+        private int maxPlayerInTeam;
 
         public GameServer(CountDownLatch countDownLatch, int numberTeams, int maxPlayerInTeam) {
             this.countDownLatch = countDownLatch;
             this.teams = createTeams(numberTeams, maxPlayerInTeam);
+            this.lock = new ReentrantLock();
+            this.numberPlayers = 0;
+            this.maxPlayerInTeam = maxPlayerInTeam;
+        }
+
+        @Override
+        public void run() {
+            waitAllPlayers();
         }
 
         public void addPlayerToTeam(Player player) {
-            Team team = getFirstEmptyTeam(teams);
-            boolean playerAdded = team.addPlayerToTeam(player);
-            if (!playerAdded) {
-                addPlayerToTeam(player);
+            lock.lock();
+            try {
+                int index = numberPlayers / maxPlayerInTeam;
+                Team team = teams.get(index);
+                team.addPlayerToTeam(player);
+                ++numberPlayers;
+            } finally {
+                lock.unlock();
             }
-        }
-
-        private Team getFirstEmptyTeam(List<Team> teams) {
-            return teams.stream().filter(team -> !team.isFull).findFirst().get();
         }
 
         private List<Team> createTeams(int numberTeams, int maxPlayerInTeam) {
             return IntStream.rangeClosed(1, numberTeams)
-                    .mapToObj(i -> new Team(i, maxPlayerInTeam, new ReentrantLock()))
+                    .mapToObj(i -> new Team(i, maxPlayerInTeam))
                     .toList();
+        }
+
+        @SneakyThrows
+        private void waitAllPlayers() {
+            CountDownLatch countDownLatch = getCountDownLatch();
+            countDownLatch.await();
         }
     }
 
@@ -67,37 +85,22 @@ public class PractiseFinalTask {
         private int idTeam;
         private List<Player> players;
         private int maxPlayerInTeam;
-        private Lock lock;
-        private boolean isFull;
 
-        public Team(int idTeam, int maxPlayerInTeam, Lock lock) {
+        public Team(int idTeam, int maxPlayerInTeam) {
             this.idTeam = idTeam;
             this.players = new ArrayList<>();
             this.maxPlayerInTeam = maxPlayerInTeam;
-            this.lock = lock;
-            this.isFull = false;
         }
 
         public boolean addPlayerToTeam(Player player) {
-            lock.lock();
-            try {
-                if (canAddToTeam()) {
-                    players.add(player);
-                    LoggerColor.printMessageWithColor("The player %s, was added to Team %s".formatted(player.getName(), this.getTeamName()), LoggerColor.Color.GREEN);
-                    if (isTeamFull())
-                        isFull = true;
-                    return true;
-                } else {
-                    LoggerColor.printMessageWithColor("The player %s, can't be added to Team %s".formatted(player.getName(), this.getTeamName()), LoggerColor.Color.RED);
-                    return false;
-                }
-            } finally {
-                lock.unlock();
+            if (!isTeamFull()) {
+                players.add(player);
+                LoggerColor.printMessageWithColor("The player %s, was added to Team %s".formatted(player.getName(), this.getTeamName()), LoggerColor.Color.GREEN);
+                return true;
+            } else {
+                LoggerColor.printMessageWithColor("The player %s, can't be added to Team %s".formatted(player.getName(), this.getTeamName()), LoggerColor.Color.RED);
+                return false;
             }
-        }
-
-        public boolean canAddToTeam() {
-            return players.size() < maxPlayerInTeam;
         }
 
         public boolean isTeamFull() {
@@ -119,7 +122,7 @@ public class PractiseFinalTask {
         @Override
         public void run() {
             connectToServer();
-            waitAllPlayers();
+            gameServer.waitAllPlayers();
             gameServer.addPlayerToTeam(this);
         }
 
@@ -127,10 +130,10 @@ public class PractiseFinalTask {
             try {
                 int timeToSleep = getRandomNumber();
                 TimeUnit.SECONDS.sleep(timeToSleep);
+                LoggerColor.printMessageWithColor(getName() + " was connected", LoggerColor.Color.GREEN);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } finally {
-                LoggerColor.printMessageWithColor(getName() + " was connected", LoggerColor.Color.GREEN);
                 CountDownLatch countDownLatch = getCountDownLatch();
                 countDownLatch.countDown();
             }
@@ -142,12 +145,6 @@ public class PractiseFinalTask {
 
         public CountDownLatch getCountDownLatch() {
             return gameServer.getCountDownLatch();
-        }
-
-        @SneakyThrows
-        private void waitAllPlayers() {
-            CountDownLatch countDownLatch = getCountDownLatch();
-            countDownLatch.await();
         }
     }
 
