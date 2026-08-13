@@ -8,7 +8,6 @@ import lombok.SneakyThrows;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.IntStream;
@@ -37,25 +36,27 @@ public class PractiseFinalTask {
 
         private CountDownLatch countDownLatch;
         private List<Team> teams;
-        private AtomicInteger availableTeam = new AtomicInteger(1);
 
         public GameServer(CountDownLatch countDownLatch, int numberTeams, int maxPlayerInTeam) {
             this.countDownLatch = countDownLatch;
-            this.teams = createTeams(numberTeams, maxPlayerInTeam, new ReentrantLock());
+            this.teams = createTeams(numberTeams, maxPlayerInTeam);
         }
 
         public void addPlayerToTeam(Player player) {
-            Team team = teams.get(availableTeam.get() - 1);
+            Team team = getFirstEmptyTeam(teams);
             boolean playerAdded = team.addPlayerToTeam(player);
             if (!playerAdded) {
-                availableTeam.getAndIncrement();
                 addPlayerToTeam(player);
             }
         }
 
-        private List<Team> createTeams(int numberTeams, int maxPlayerInTeam, ReentrantLock reentrantLock) {
+        private Team getFirstEmptyTeam(List<Team> teams) {
+            return teams.stream().filter(team -> !team.isFull).findFirst().get();
+        }
+
+        private List<Team> createTeams(int numberTeams, int maxPlayerInTeam) {
             return IntStream.rangeClosed(1, numberTeams)
-                    .mapToObj(i -> new Team(i, maxPlayerInTeam, reentrantLock))
+                    .mapToObj(i -> new Team(i, maxPlayerInTeam, new ReentrantLock()))
                     .toList();
         }
     }
@@ -67,12 +68,14 @@ public class PractiseFinalTask {
         private List<Player> players;
         private int maxPlayerInTeam;
         private Lock lock;
+        private boolean isFull;
 
         public Team(int idTeam, int maxPlayerInTeam, Lock lock) {
             this.idTeam = idTeam;
             this.players = new ArrayList<>();
             this.maxPlayerInTeam = maxPlayerInTeam;
             this.lock = lock;
+            this.isFull = false;
         }
 
         public boolean addPlayerToTeam(Player player) {
@@ -81,6 +84,8 @@ public class PractiseFinalTask {
                 if (canAddToTeam()) {
                     players.add(player);
                     LoggerColor.printMessageWithColor("The player %s, was added to Team %s".formatted(player.getName(), this.getTeamName()), LoggerColor.Color.GREEN);
+                    if (isTeamFull())
+                        isFull = true;
                     return true;
                 } else {
                     LoggerColor.printMessageWithColor("The player %s, can't be added to Team %s".formatted(player.getName(), this.getTeamName()), LoggerColor.Color.RED);
@@ -93,6 +98,10 @@ public class PractiseFinalTask {
 
         public boolean canAddToTeam() {
             return players.size() < maxPlayerInTeam;
+        }
+
+        public boolean isTeamFull() {
+            return players.size() == maxPlayerInTeam;
         }
 
         public String getTeamName() {
