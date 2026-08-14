@@ -11,7 +11,7 @@ public class Practise17 {
     //CyclicBarrier
     public static void main(String[] args) {
         int cars = 6;
-        //тут был вызван Runnable 2 аргументом, он вызывается, до розблокировки всех потоков и отрабатывает, потом потоки разблокируются и работают дальше
+        //тут был вызван Runnable 2 аргументом, он вызывается, до разблокировки всех потоков и отрабатывает, потом потоки разблокируются и работают дальше
         CyclicBarrier cyclicBarrier = new CyclicBarrier(6, () -> LoggerColor.printMessageWithColor("The race has started", LoggerColor.Color.GREEN));
         ExecutorService executorService = Executors.newFixedThreadPool(cars);
         IntStream.rangeClosed(1, cars).forEach(i -> executorService.execute(createCar(cyclicBarrier)));

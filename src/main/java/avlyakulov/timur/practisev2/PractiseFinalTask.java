@@ -7,6 +7,7 @@ import lombok.SneakyThrows;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,8 +25,8 @@ public class PractiseFinalTask {
         int numberPlayers = 6;
         int numberTeams = 3;
         int maxPlayerInTeam = 2;
-        CountDownLatch countDownLatch = new CountDownLatch(numberPlayers);
-        GameServer gameServer = new GameServer(countDownLatch, numberTeams, maxPlayerInTeam);
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(numberPlayers);
+        GameServer gameServer = new GameServer(cyclicBarrier, numberTeams, maxPlayerInTeam);
         ExecutorService executorService = Executors.newFixedThreadPool(numberPlayers + 1);
         IntStream.rangeClosed(1, numberPlayers).forEach(i -> executorService.execute(new Player(i, gameServer)));
         executorService.execute(gameServer);
@@ -35,14 +36,14 @@ public class PractiseFinalTask {
     @Getter
     static class GameServer implements Runnable {
 
-        private CountDownLatch countDownLatch;
+        private CyclicBarrier cyclicBarrier;
         private List<Team> teams;
         private Lock lock;
         private int numberPlayers;
         private int maxPlayerInTeam;
 
-        public GameServer(CountDownLatch countDownLatch, int numberTeams, int maxPlayerInTeam) {
-            this.countDownLatch = countDownLatch;
+        public GameServer(CyclicBarrier cyclicBarrier, int numberTeams, int maxPlayerInTeam) {
+            this.cyclicBarrier = cyclicBarrier;
             this.teams = createTeams(numberTeams, maxPlayerInTeam);
             this.lock = new ReentrantLock();
             this.numberPlayers = 0;
@@ -52,6 +53,17 @@ public class PractiseFinalTask {
         @Override
         public void run() {
             waitAllPlayers();
+            chooseTeamsAndStart();
+        }
+
+        public void chooseTeamsAndStart() {
+            Random random = new Random();
+            Team teamOne = teams.get(random.nextInt(0, teams.size() - 1));
+            Team teamTwo = teams.get(random.nextInt(0, teams.size() - 1));
+            if (teamOne == teamTwo)
+                chooseTeamsAndStart();
+            teamOne.playGame();
+            teamTwo.playGame();
         }
 
         public void addPlayerToTeam(Player player) {
@@ -74,8 +86,7 @@ public class PractiseFinalTask {
 
         @SneakyThrows
         private void waitAllPlayers() {
-            CountDownLatch countDownLatch = getCountDownLatch();
-            countDownLatch.await();
+            cyclicBarrier.await();
         }
     }
 
@@ -85,11 +96,15 @@ public class PractiseFinalTask {
         private int idTeam;
         private List<Player> players;
         private int maxPlayerInTeam;
+        private boolean isWinner;
+        private Lock lock;
 
         public Team(int idTeam, int maxPlayerInTeam) {
             this.idTeam = idTeam;
             this.players = new ArrayList<>();
             this.maxPlayerInTeam = maxPlayerInTeam;
+            this.isWinner = true;
+            this.lock = new ReentrantLock();
         }
 
         public boolean addPlayerToTeam(Player player) {
@@ -103,12 +118,24 @@ public class PractiseFinalTask {
             }
         }
 
+        public void playGame() {
+            Player playerOne = players.get(0);
+            Player playerTwo = players.get(1);
+            System.out.printf("The active Team %d starts playing. Player %d vs Player %d\n", getIdTeam(), playerOne.getId(), playerTwo.getId());
+            playerOne.playGame(this);
+            playerTwo.playGame(this);
+        }
+
         public boolean isTeamFull() {
             return players.size() == maxPlayerInTeam;
         }
 
         public String getTeamName() {
             return "Team " + idTeam;
+        }
+
+        public void setIsWinner(boolean isWinner) {
+            this.isWinner = isWinner;
         }
     }
 
@@ -126,16 +153,37 @@ public class PractiseFinalTask {
             gameServer.addPlayerToTeam(this);
         }
 
+        @SneakyThrows
         public void connectToServer() {
             try {
                 int timeToSleep = getRandomNumber();
                 TimeUnit.SECONDS.sleep(timeToSleep);
                 LoggerColor.printMessageWithColor(getName() + " was connected", LoggerColor.Color.GREEN);
+                CyclicBarrier cyclicBarrier = getCyclicBarrier();
+                cyclicBarrier.await();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } finally {
-                CountDownLatch countDownLatch = getCountDownLatch();
-                countDownLatch.countDown();
+            }
+        }
+
+        public void playGame(Team team) {
+            try {
+                int timeToSleep = getRandomNumber();
+                TimeUnit.SECONDS.sleep(timeToSleep);
+                Lock lock = team.getLock();
+                lock.lock();
+                try {
+                    if (team.isWinner) {
+                        LoggerColor.printMessageWithColor("Player %d has won! Congratulations".formatted(this.getId()), LoggerColor.Color.GREEN);
+                        team.setIsWinner(false);
+                    }
+                    else
+                        LoggerColor.printMessageWithColor("Player %d has lost! Better luck next time".formatted(this.getId()), LoggerColor.Color.RED);
+                } finally {
+                    lock.unlock();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
 
@@ -143,8 +191,8 @@ public class PractiseFinalTask {
             return "Player " + id;
         }
 
-        public CountDownLatch getCountDownLatch() {
-            return gameServer.getCountDownLatch();
+        public CyclicBarrier getCyclicBarrier() {
+            return gameServer.getCyclicBarrier();
         }
     }
 
