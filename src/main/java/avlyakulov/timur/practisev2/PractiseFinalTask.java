@@ -3,6 +3,7 @@ package avlyakulov.timur.practisev2;
 import avlyakulov.timur.utils.LoggerColor;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;
@@ -23,74 +24,49 @@ public class PractiseFinalTask {
     @SneakyThrows
     public static void main(String[] args) {
         int numberPlayers = 6;
-        int numberTeams = 3;
-        int maxPlayerInTeam = 2;
         CyclicBarrier cyclicBarrier = new CyclicBarrier(numberPlayers);
-        GameServer gameServer = new GameServer(cyclicBarrier, numberTeams, maxPlayerInTeam);
-        ExecutorService executorService = Executors.newFixedThreadPool(numberPlayers + 1);
-        IntStream.rangeClosed(1, numberPlayers).forEach(i -> executorService.execute(new Player(i, gameServer)));
-        executorService.execute(gameServer);
-        executorService.shutdown();
+        GameServer gameServer = new GameServer(cyclicBarrier, numberPlayers);
+        try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
+            executorService.execute(gameServer);
+        }
     }
 
     @Getter
     static class GameServer implements Runnable {
 
         private CyclicBarrier cyclicBarrier;
-        private List<Team> teams;
         private Lock lock;
         private int numberPlayers;
-        private int maxPlayerInTeam;
+        private List<Player> players;
 
-        public GameServer(CyclicBarrier cyclicBarrier, int numberTeams, int maxPlayerInTeam) {
+        public GameServer(CyclicBarrier cyclicBarrier, int numberPlayers) {
             this.cyclicBarrier = cyclicBarrier;
-            this.teams = createTeams(numberTeams, maxPlayerInTeam);
             this.lock = new ReentrantLock();
-            this.numberPlayers = 0;
-            this.maxPlayerInTeam = maxPlayerInTeam;
+            this.numberPlayers = numberPlayers;
+            this.players = createPlayers();
         }
 
         @Override
         public void run() {
             waitAllPlayers();
-            chooseTeamsAndStart();
         }
 
-        public void chooseTeamsAndStart() {
-            Random random = new Random();
-            Team teamOne = teams.get(random.nextInt(0, teams.size() - 1));
-            Team teamTwo = teams.get(random.nextInt(0, teams.size() - 1));
-            if (teamOne == teamTwo)
-                chooseTeamsAndStart();
-            teamOne.playGame();
-            teamTwo.playGame();
-        }
-
-        public void addPlayerToTeam(Player player) {
-            lock.lock();
-            try {
-                int index = numberPlayers / maxPlayerInTeam;
-                Team team = teams.get(index);
-                team.addPlayerToTeam(player);
-                ++numberPlayers;
-            } finally {
-                lock.unlock();
-            }
-        }
-
-        private List<Team> createTeams(int numberTeams, int maxPlayerInTeam) {
-            return IntStream.rangeClosed(1, numberTeams)
-                    .mapToObj(i -> new Team(i, maxPlayerInTeam))
+        private List<Player> createPlayers() {
+            return IntStream.rangeClosed(1, numberPlayers)
+                    .mapToObj(i -> new Player(i, this))
                     .toList();
         }
 
+        //todo now It launches only 1 thread and then It stops
         @SneakyThrows
         private void waitAllPlayers() {
+            players.forEach(Player::connectToServer);
             cyclicBarrier.await();
         }
     }
 
     @Getter
+    @Setter
     static class Team {
 
         private int idTeam;
@@ -133,34 +109,21 @@ public class PractiseFinalTask {
         public String getTeamName() {
             return "Team " + idTeam;
         }
-
-        public void setIsWinner(boolean isWinner) {
-            this.isWinner = isWinner;
-        }
     }
 
     @Getter
     @AllArgsConstructor
-    static class Player implements Runnable {
+    static class Player {
 
         private int id;
         private GameServer gameServer;
 
-        @Override
-        public void run() {
-            connectToServer();
-            gameServer.waitAllPlayers();
-            gameServer.addPlayerToTeam(this);
-        }
-
         @SneakyThrows
-        public void connectToServer() {
+        private void connectToServer() {
             try {
                 int timeToSleep = getRandomNumber();
                 TimeUnit.SECONDS.sleep(timeToSleep);
                 LoggerColor.printMessageWithColor(getName() + " was connected", LoggerColor.Color.GREEN);
-                CyclicBarrier cyclicBarrier = getCyclicBarrier();
-                cyclicBarrier.await();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -175,9 +138,8 @@ public class PractiseFinalTask {
                 try {
                     if (team.isWinner) {
                         LoggerColor.printMessageWithColor("Player %d has won! Congratulations".formatted(this.getId()), LoggerColor.Color.GREEN);
-                        team.setIsWinner(false);
-                    }
-                    else
+                        team.setWinner(false);
+                    } else
                         LoggerColor.printMessageWithColor("Player %d has lost! Better luck next time".formatted(this.getId()), LoggerColor.Color.RED);
                 } finally {
                     lock.unlock();
@@ -189,10 +151,6 @@ public class PractiseFinalTask {
 
         public String getName() {
             return "Player " + id;
-        }
-
-        public CyclicBarrier getCyclicBarrier() {
-            return gameServer.getCyclicBarrier();
         }
     }
 
