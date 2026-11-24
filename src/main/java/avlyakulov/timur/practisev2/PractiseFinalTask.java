@@ -24,7 +24,7 @@ public class PractiseFinalTask {
     @SneakyThrows
     public static void main(String[] args) {
         int numberPlayers = 6;
-        CyclicBarrier cyclicBarrier = new CyclicBarrier(numberPlayers);
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(numberPlayers + 1);
         GameServer gameServer = new GameServer(cyclicBarrier, numberPlayers);
         try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             executorService.execute(gameServer);
@@ -49,6 +49,7 @@ public class PractiseFinalTask {
         @Override
         public void run() {
             waitAllPlayers();
+            LoggerColor.printMessageWithColor("All players are connected", LoggerColor.Color.GREEN);
         }
 
         private List<Player> createPlayers() {
@@ -60,7 +61,7 @@ public class PractiseFinalTask {
         //todo now It launches only 1 thread and then It stops
         @SneakyThrows
         private void waitAllPlayers() {
-            players.forEach(Player::connectToServer);
+            players.forEach(player -> new Thread(player::connectToServer).start());
             cyclicBarrier.await();
         }
     }
@@ -124,6 +125,8 @@ public class PractiseFinalTask {
                 int timeToSleep = getRandomNumber();
                 TimeUnit.SECONDS.sleep(timeToSleep);
                 LoggerColor.printMessageWithColor(getName() + " was connected", LoggerColor.Color.GREEN);
+                CyclicBarrier cyclicBarrier = gameServer.getCyclicBarrier();
+                cyclicBarrier.await();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
