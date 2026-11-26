@@ -26,8 +26,9 @@ public class PractiseFinalTask {
     @SneakyThrows
     public static void main(String[] args) {
         int numberPlayers = 6;
+        int playersInTeam = 2;
         CyclicBarrier cyclicBarrier = new CyclicBarrier(numberPlayers + 1, () -> LoggerColor.printMessageWithColor("All players are connected", LoggerColor.Color.GREEN));
-        GameServer gameServer = new GameServer(cyclicBarrier, numberPlayers);
+        GameServer gameServer = new GameServer(cyclicBarrier, numberPlayers, playersInTeam);
         try (ExecutorService executorService = Executors.newSingleThreadExecutor()) {
             executorService.execute(gameServer);
         }
@@ -39,12 +40,14 @@ public class PractiseFinalTask {
         private CyclicBarrier cyclicBarrier;
         private Lock lock;
         private int numberPlayers;
+        private int playersInTeam;
         private List<Player> players;
 
-        public GameServer(CyclicBarrier cyclicBarrier, int numberPlayers) {
+        public GameServer(CyclicBarrier cyclicBarrier, int numberPlayers, int playersInTeam) {
             this.cyclicBarrier = cyclicBarrier;
             this.lock = new ReentrantLock();
             this.numberPlayers = numberPlayers;
+            this.playersInTeam = playersInTeam;
             this.players = createPlayers();
         }
 
@@ -66,10 +69,10 @@ public class PractiseFinalTask {
             cyclicBarrier.await();
         }
 
-        //todo remove magic numbers
         private void dividePlayersToTeams() {
-            int[] tempArr = new int[numberPlayers - 2];
-            List<Integer> list = IntStream.rangeClosed(1, numberPlayers - 2)
+            int playersPlaying = numberPlayers - playersInTeam;
+            int[] tempArr = new int[playersPlaying];
+            List<Integer> list = IntStream.rangeClosed(1, playersPlaying)
                     .mapToObj(i -> getNotRepeatableNumber(i, tempArr))
                     .toList();
             LoggerColor.printMessageWithColor("Players that are playing %s".formatted(list), LoggerColor.Color.GREEN);
@@ -97,7 +100,6 @@ public class PractiseFinalTask {
                     .toList(); // в Java 16+; для Java 8–15 используйте .collect(Collectors.toList())
         }
 
-        //todo remove magic numbers
         private int getRandomNumber() {
             return ThreadLocalRandom.current().nextInt(1, numberPlayers + 1);
         }
