@@ -7,11 +7,13 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class PractiseFinalTask {
@@ -49,6 +51,7 @@ public class PractiseFinalTask {
         @Override
         public void run() {
             waitAllPlayers();
+            dividePlayersToTeams();
         }
 
         private List<Player> createPlayers() {
@@ -61,6 +64,42 @@ public class PractiseFinalTask {
         private void waitAllPlayers() {
             players.forEach(player -> new Thread(player::connectToServer).start());
             cyclicBarrier.await();
+        }
+
+        //todo remove magic numbers
+        private void dividePlayersToTeams() {
+            int[] tempArr = new int[numberPlayers - 2];
+            List<Integer> list = IntStream.rangeClosed(1, numberPlayers - 2)
+                    .mapToObj(i -> getNotRepeatableNumber(i, tempArr))
+                    .toList();
+            LoggerColor.printMessageWithColor("Players that are playing %s".formatted(list), LoggerColor.Color.GREEN);
+        }
+
+        private int getNotRepeatableNumber(int currentIndex, int[] tempArr) {
+            if (currentIndex == 1) {
+                int randomNumber = getRandomNumber();
+                tempArr[currentIndex - 1] = randomNumber;
+                return randomNumber;
+            }
+            List<Integer> numbers = createList(tempArr);
+            int randomNumber = getRandomNumber();
+            return numbers.contains(randomNumber) ? getNotRepeatableNumber(currentIndex, tempArr) : getNumber(currentIndex, tempArr, randomNumber);
+        }
+
+        private int getNumber(int currentIndex, int[] tempArr, int randomNumber) {
+            tempArr[currentIndex - 1] = randomNumber;
+            return randomNumber;
+        }
+
+        private List<Integer> createList(int[] arr) {
+            return Arrays.stream(arr)
+                    .boxed()
+                    .toList(); // в Java 16+; для Java 8–15 используйте .collect(Collectors.toList())
+        }
+
+        //todo remove magic numbers
+        private int getRandomNumber() {
+            return ThreadLocalRandom.current().nextInt(1, numberPlayers + 1);
         }
     }
 
